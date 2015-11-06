@@ -1,0 +1,15 @@
+apply plugin: "application"
+
+mainClassName = "tv.fims.test.app.FimsTestSuite"
+ext.mainClass = mainClassName
+
+jar {
+    manifest {
+        attributes "Main-Class": mainClass
+    }
+}
+
+dependencies {
+    compile project(":fimstestsuite-core")
+}
+
