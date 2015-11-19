@@ -75,10 +75,13 @@ public class ConnectionBuilder extends Thread
 
                 try {
                     clientSocket = myServerSocket.accept();
-                    serverSocket = SocketFactory.getDefault().createSocket(myRemoteAddress, myRemotePort);
-                    Connection connection = new Connection(this, clientSocket, serverSocket);
-                    connection.start();
-                    doClose = false;
+                    try {
+                        serverSocket = SocketFactory.getDefault().createSocket(myRemoteAddress, myRemotePort);
+                        Connection connection = new Connection(this, clientSocket, serverSocket);
+                        connection.start();
+                        doClose = false;
+                    } catch (IOException ex) {
+                    }
                 } finally {
                     if (doClose) {
                         if (clientSocket != null) {
