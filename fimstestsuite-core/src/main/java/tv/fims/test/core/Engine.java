@@ -151,7 +151,7 @@ public class Engine
         }
     }
 
-    public synchronized void replay(File file)
+    public synchronized boolean replay(File file)
     {
         try (FileInputStream fis = new FileInputStream(file)) {
             HttpMessageWrapper wrapper;
@@ -171,8 +171,11 @@ public class Engine
                     response = null;
                 }
             }
+            return true;
         } catch (IOException ex) {
             Logger.getLogger(Engine.class.getName()).log(Level.SEVERE, null, ex);
         }
+
+        return false;
     }
 }

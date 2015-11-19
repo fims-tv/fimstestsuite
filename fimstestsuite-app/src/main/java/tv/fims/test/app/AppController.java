@@ -34,6 +34,9 @@ public interface AppController
     void stopLogging();
     boolean isLogging();
 
+    // Replay
+    boolean replayBinaryLogFile(File file);
+
     // Other
     void loadProperties();
     void saveProperties();

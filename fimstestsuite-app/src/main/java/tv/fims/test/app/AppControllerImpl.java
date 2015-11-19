@@ -237,6 +237,12 @@ public class AppControllerImpl implements AppController
     }
 
     @Override
+    public boolean replayBinaryLogFile(File file)
+    {
+        return myEngine.replay(file);
+    }
+
+    @Override
     public void loadProperties()
     {
         try (InputStream is = new FileInputStream("application.properties")) {
