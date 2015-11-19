@@ -6,8 +6,11 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.http.HttpRequest;
@@ -15,28 +18,34 @@ import org.apache.http.HttpResponse;
 
 public class Engine
 {
-    private final List<ConnectionBuilder> myConnectionBuilders;
+    private final Map<URL, ConnectionBuilder> myConnectionBuilders;
     private final List<Connection> myConnections;
+    private final Map<URL, URL> myCallbackMap;
 
-    private BufferedOutputStream myLogger;
+    private BufferedOutputStream myBinaryLogger;
+    private BufferedOutputStream myRegularLogger;
 
     public Engine()
     {
-        myConnectionBuilders = new ArrayList<>();
+        myConnectionBuilders = new HashMap<>();
         myConnections = new ArrayList<>();
+        myCallbackMap = new HashMap<>();
     }
 
-    public synchronized boolean connect(int localPort, String remoteAddress, int remotePort)
+    public synchronized ConnectionBuilder connect(String localAddress, int localPort, String remoteAddress, int remotePort, URL callbackAddress)
     {
         try {
-            ConnectionBuilder cb = new ConnectionBuilder(this, localPort, remoteAddress, remotePort, false);
-            cb.start();
-            myConnectionBuilders.add(cb);
-            return true;
+            ConnectionBuilder cb = myConnectionBuilders.get(callbackAddress);
+            if (cb == null) {
+                cb = new ConnectionBuilder(this, localAddress, localPort, remoteAddress, remotePort, callbackAddress != null);
+                cb.start();
+                myConnectionBuilders.put(callbackAddress, cb);
+            }
+            return cb;
         } catch (IOException ex) {
             Logger.getLogger(Engine.class.getName()).log(Level.SEVERE, null, ex);
         }
-        return false;
+        return null;
     }
 
     public synchronized void disconnect()
@@ -46,54 +55,97 @@ public class Engine
         }
         myConnections.clear();
 
-        for (ConnectionBuilder connectionBuilder : myConnectionBuilders) {
+        for (ConnectionBuilder connectionBuilder : myConnectionBuilders.values()) {
             connectionBuilder.interrupt();
         }
         myConnectionBuilders.clear();
+        myCallbackMap.clear();
     }
 
-    public synchronized boolean startLogging(File file)
+    public synchronized void putCallback(URL replacement, URL original)
     {
-        if (myLogger == null) {
+        myCallbackMap.put(replacement, original);
+    }
+
+    public synchronized URL getCallback(URL url)
+    {
+        return myCallbackMap.get(url);
+    }
+
+    public synchronized boolean startLogging(File binaryLogFile, File regularLogFile)
+    {
+        stopLogging();
+
+        if (binaryLogFile != null) {
             try {
-                myLogger = new BufferedOutputStream(new FileOutputStream(file, true));
-                return true;
+                myBinaryLogger = new BufferedOutputStream(new FileOutputStream(binaryLogFile, true));
             } catch (FileNotFoundException ex) {
                 Logger.getLogger(Engine.class.getName()).log(Level.SEVERE, null, ex);
+                stopLogging();
             }
         }
-        return false;
+
+        if (regularLogFile != null) {
+            try {
+                myRegularLogger = new BufferedOutputStream(new FileOutputStream(regularLogFile, true));
+            } catch (FileNotFoundException ex) {
+                Logger.getLogger(Engine.class.getName()).log(Level.SEVERE, null, ex);
+                stopLogging();
+            }
+        }
+
+        return myBinaryLogger != null || myRegularLogger != null;
     }
 
     public synchronized void stopLogging()
     {
-        if (myLogger != null) {
+        if (myBinaryLogger != null) {
             try {
-                myLogger.close();
+                myBinaryLogger.close();
             } catch (IOException ex) {
                 Logger.getLogger(Engine.class.getName()).log(Level.SEVERE, null, ex);
             } finally {
-                myLogger = null;
+                myBinaryLogger = null;
+            }
+        }
+        if (myRegularLogger != null) {
+            try {
+                myRegularLogger.close();
+            } catch (IOException ex) {
+                Logger.getLogger(Engine.class.getName()).log(Level.SEVERE, null, ex);
+            } finally {
+                myRegularLogger = null;
             }
         }
     }
 
     public synchronized void process(HttpMessageWrapper request, HttpMessageWrapper response)
     {
-        System.out.println(request);
-        System.out.println(response);
-
-        if (myLogger != null) {
-            write(request, response);
+        if (myBinaryLogger != null) {
+            writeBinaryLog(request, response);
+        }
+        if (myRegularLogger != null) {
+            writeRegularLog(request, response);
         }
     }
 
-    private void write(HttpMessageWrapper request, HttpMessageWrapper response)
+    private void writeBinaryLog(HttpMessageWrapper request, HttpMessageWrapper response)
     {
         try {
-            request.writeTo(myLogger);
-            response.writeTo(myLogger);
-            myLogger.flush();
+            request.writeTo(myBinaryLogger);
+            response.writeTo(myBinaryLogger);
+            myBinaryLogger.flush();
+        } catch (IOException ex) {
+            Logger.getLogger(Engine.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    private void writeRegularLog(HttpMessageWrapper request, HttpMessageWrapper response)
+    {
+        try {
+            myRegularLogger.write(request.toString().getBytes("UTF-8"));
+            myRegularLogger.write(response.toString().getBytes("UTF-8"));
+            myRegularLogger.flush();
         } catch (IOException ex) {
             Logger.getLogger(Engine.class.getName()).log(Level.SEVERE, null, ex);
         }

@@ -4,22 +4,37 @@ import java.io.File;
 
 public interface AppController
 {
+    // Connection
+    void setLocalAddress(String address);
+    String getLocalAddress();
     void setLocalPort(int port);
     int getLocalPort();
 
     void setRemoteAddress(String address);
     String getRemoteAddress();
-
     void setRemotePort(int port);
     int getRemotePort();
 
-    void setLogFile(File file);
-    File getLogFile();
+    void connect();
+    void disconnect();
+    boolean isConnected();
+
+    // Logging
+    void setBinaryLogEnabled(boolean enabled);
+    boolean isBinaryLogEnabled();
+    void setBinaryLogFile(File file);
+    File getBinaryLogFile();
+
+    void setRegularLogEnabled(boolean enabled);
+    boolean isRegularLogEnabled();
+    void setRegularLogFile(File file);
+    File getRegularLogFile();
 
     void startLogging();
     void stopLogging();
     boolean isLogging();
 
+    // Other
     void loadProperties();
     void saveProperties();
 
@@ -28,8 +43,8 @@ public interface AppController
 
     public static enum Event
     {
-        ConfigurationUpdate,
-        ConnectionUpdate
+        ConnectionUpdate,
+        LoggingUpdate,
     }
 
     public interface EventListener

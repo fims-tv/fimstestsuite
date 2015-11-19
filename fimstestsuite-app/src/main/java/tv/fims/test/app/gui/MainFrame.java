@@ -8,12 +8,14 @@ import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
+import javax.swing.JTabbedPane;
 import tv.fims.test.app.AppController;
 
 public class MainFrame extends JFrame
 {
     private final AppController myController;
     private final ActionListener myActionListener;
+    private final JTabbedPane myTabbedPane;
 
     public MainFrame(String title, AppController controller) throws HeadlessException
     {
@@ -29,7 +31,10 @@ public class MainFrame extends JFrame
 
         setJMenuBar(createMenuBar());
 
-        add(new MainPanel(myController));
+        myTabbedPane = new JTabbedPane();
+        myTabbedPane.addTab("Connection", new ConnectionPanel(myController));
+        myTabbedPane.addTab("Logging", new LoggingPanel(myController));
+        add(myTabbedPane);
 
         pack();
         setLocationRelativeTo(null);

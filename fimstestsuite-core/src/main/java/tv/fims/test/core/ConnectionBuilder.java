@@ -10,21 +10,53 @@ import javax.net.SocketFactory;
 public class ConnectionBuilder extends Thread
 {
     private final Engine myEngine;
+    private final String myLocalAddress;
     private final int myLocalPort;
     private final String myRemoteAddress;
     private final int myRemotePort;
     private final boolean myCallback;
     private final ServerSocket myServerSocket;
 
-    public ConnectionBuilder(Engine engine, int localPort, String remoteAddress, int remotePort, boolean isCallback) throws IOException
+    public ConnectionBuilder(Engine engine, String localAddress, int localPort, String remoteAddress, int remotePort, boolean isCallback) throws IOException
     {
         super("ConnectionBuilder:" + localPort + " -> " + remoteAddress + ":" + remotePort);
         myEngine = engine;
+        myLocalAddress = localAddress;
         myLocalPort = localPort;
         myRemoteAddress = remoteAddress;
         myRemotePort = remotePort;
         myCallback = isCallback;
         myServerSocket = new ServerSocket(myLocalPort);
+    }
+
+    public Engine getEngine()
+    {
+        return myEngine;
+    }
+
+    public String getLocalAddress()
+    {
+        return myLocalAddress;
+    }
+
+    public int getLocalPort()
+    {
+        return myLocalPort;
+    }
+
+    public String getRemoteAddress()
+    {
+        return myRemoteAddress;
+    }
+
+    public int getRemotePort()
+    {
+        return myRemotePort;
+    }
+
+    public boolean isCallback()
+    {
+        return myCallback;
     }
 
     public int getPort()
@@ -44,7 +76,7 @@ public class ConnectionBuilder extends Thread
                 try {
                     clientSocket = myServerSocket.accept();
                     serverSocket = SocketFactory.getDefault().createSocket(myRemoteAddress, myRemotePort);
-                    Connection connection = new Connection(myEngine, clientSocket, serverSocket, myRemoteAddress, myRemotePort, myCallback);
+                    Connection connection = new Connection(this, clientSocket, serverSocket);
                     connection.start();
                     doClose = false;
                 } finally {

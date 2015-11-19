@@ -6,6 +6,8 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.Charset;
+import java.nio.charset.UnsupportedCharsetException;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
@@ -20,10 +22,12 @@ import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.HttpMessage;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
+import org.apache.http.ParseException;
 import org.apache.http.ProtocolVersion;
 import org.apache.http.RequestLine;
 import org.apache.http.StatusLine;
 import org.apache.http.entity.ByteArrayEntity;
+import org.apache.http.entity.ContentType;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.message.BasicHttpEntityEnclosingRequest;
 import org.apache.http.message.BasicHttpRequest;
@@ -241,7 +245,13 @@ public class HttpMessageWrapper
     @Override
     public String toString()
     {
-        String arrowsString = (myMessage instanceof HttpRequest) ? ">>>>>>>>>> " : "<<<<<<<<<< ";
+        String arrowsString;
+
+        if (((myMessage instanceof HttpRequest) && !myCallback) || ((myMessage instanceof HttpResponse) && myCallback)) {
+            arrowsString = ">>>>>>>>>> ";
+        } else {
+            arrowsString = "<<<<<<<<<< ";
+        }
         String callbackString = myCallback ? "Callback " : "";
         String typeString = (myMessage instanceof HttpRequest) ? "HttpRequest " : "HttpResponse ";
 
@@ -250,7 +260,7 @@ public class HttpMessageWrapper
         sb.append(callbackString);
         sb.append(typeString);
         sb.append("at ");
-        sb.append(new SimpleDateFormat().format(new Date(myTimestamp)));
+        sb.append(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").format(new Date(myTimestamp)));
         sb.append(" ");
         sb.append(arrowsString);
         sb.append("\r\n");
@@ -277,35 +287,42 @@ public class HttpMessageWrapper
         sb.append("\r\n");
 
         if (entity != null) {
-            boolean isText = false;
-            boolean isXml = false;
-
-            for (Header header : myMessage.getHeaders("Content-Type")) {
-                String value = header.getValue().toLowerCase();
-                if (value.contains("xml")) {
-                    isXml = true;
-                }
-                if (value.contains("text")) {
-                    isText = true;
-                }
-            }
-
-            if (isXml || isText) {
-                try (InputStream is = entity.getContent()) {
-                    String text = IOUtils.toString(is, "UTF-8");
-                    if (isXml) {
-                        text = Utils.formatXML(text);
+            try (InputStream is = entity.getContent()) {
+                ContentType contentType = null;
+                for (Header header : myMessage.getHeaders("Content-Type")) {
+                    try {
+                        contentType = ContentType.parse(header.getValue());
+                    } catch (ParseException | UnsupportedCharsetException ex) {
                     }
-                    sb.append(text);
-                    sb.append("\r\n");
-                } catch (IOException | UnsupportedOperationException ex) {
-                    Logger.getLogger(Utils.class.getName()).log(Level.SEVERE, null, ex);
                 }
-            } else {
-                sb.append("NOT SHOWING BINARY CONTENT\r\n");
-            }
-        }
 
+                if (contentType != null) {
+                    Charset charset = contentType.getCharset();
+                    if (charset == null) {
+                        charset = Charset.forName("UTF-8");
+                    }
+                    String mimeType = contentType.getMimeType();
+                    String content = IOUtils.toString(is, charset.name());
+
+                    if (mimeType.contains("json") || mimeType.contains("xml")) {
+                        if (mimeType.contains("json")) {
+                            // TODO convert content to XML
+                            // content = Utils.convertJSONtoXML(content);
+                        }
+
+                        content = Utils.formatXML(content);
+                    }
+
+                    sb.append(content);
+                }
+            } catch (IOException | UnsupportedOperationException ex) {
+                Logger.getLogger(Utils.class.getName()).log(Level.SEVERE, null, ex);
+                sb.append("FAILED TO SHOW CONTENT WITH LENGTH OF ");
+                sb.append(entity.getContentLength());
+            }
+
+            sb.append("\r\n");
+        }
         return sb.toString();
     }
 }

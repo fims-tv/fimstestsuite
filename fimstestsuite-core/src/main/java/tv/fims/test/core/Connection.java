@@ -1,38 +1,49 @@
 package tv.fims.test.core;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.MalformedURLException;
 import java.net.Socket;
+import java.net.URL;
+import java.nio.charset.Charset;
+import java.nio.charset.UnsupportedCharsetException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathExpressionException;
+import javax.xml.xpath.XPathFactory;
+import org.apache.commons.io.IOUtils;
+import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.HttpException;
 import org.apache.http.HttpMessage;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
+import org.apache.http.ParseException;
 import org.apache.http.entity.BufferedHttpEntity;
+import org.apache.http.entity.ByteArrayEntity;
+import org.apache.http.entity.ContentType;
 import org.apache.http.impl.DefaultBHttpClientConnection;
 import org.apache.http.impl.DefaultBHttpServerConnection;
 import org.apache.http.util.EntityUtils;
+import org.w3c.dom.Document;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 public class Connection extends Thread
 {
-    private final Engine myEngine;
+    private final ConnectionBuilder myConnectionBuilder;
     private final Socket myClientSocket;
     private final Socket myServerSocket;
-    private final String myRemoteAddress;
-    private final int myRemotePort;
-    private final boolean myCallback;
 
-    public Connection(Engine engine, Socket clientSocket, Socket serverSocket, String remoteAddress, int remotePort, boolean isCallback)
+    public Connection(ConnectionBuilder connectionBuilder, Socket clientSocket, Socket serverSocket)
     {
         super("Connection:" + clientSocket.getRemoteSocketAddress().toString() + " <-> " + serverSocket.getRemoteSocketAddress());
-        myEngine = engine;
+        myConnectionBuilder = connectionBuilder;
         myClientSocket = clientSocket;
         myServerSocket = serverSocket;
-        myRemoteAddress = remoteAddress;
-        myRemotePort = remotePort;
-        myCallback = isCallback;
     }
 
     private HttpMessageWrapper receiveRequest(DefaultBHttpServerConnection clientConnection) throws HttpException, IOException
@@ -49,14 +60,9 @@ public class Connection extends Thread
             }
         }
 
-        // setting Host header so we can correctly forward it to the service
-        if (myRemotePort == 80) {
-            request.setHeader("Host", myRemoteAddress);
-        } else {
-            request.setHeader("Host", myRemoteAddress + ":" + myRemotePort);
-        }
+        request = processMessage(request);
 
-        return new HttpMessageWrapper(request, System.currentTimeMillis(), myCallback);
+        return new HttpMessageWrapper(request, System.currentTimeMillis(), myConnectionBuilder.isCallback());
     }
 
     private void sendMessage(DefaultBHttpClientConnection connection, HttpMessageWrapper wrapper) throws HttpException, IOException
@@ -83,7 +89,9 @@ public class Connection extends Thread
             response.setEntity(bufferedEntity);
         }
 
-        return new HttpMessageWrapper(response, System.currentTimeMillis(), myCallback);
+        response = processMessage(response);
+
+        return new HttpMessageWrapper(response, System.currentTimeMillis(), myConnectionBuilder.isCallback());
     }
 
     private void sendMessage(DefaultBHttpServerConnection connection, HttpMessageWrapper wrapper) throws HttpException, IOException
@@ -114,7 +122,7 @@ public class Connection extends Thread
                 HttpMessageWrapper response = receiveResponse(serverConnection);
                 sendMessage(clientConnection, response);
 
-                myEngine.process(request, response);
+                myConnectionBuilder.getEngine().process(request, response);
             }
         } catch (HttpException | IOException ex) {
         } finally {
@@ -146,5 +154,113 @@ public class Connection extends Thread
             Logger.getLogger(Connection.class.getName()).log(Level.SEVERE, null, ex);
         }
         super.interrupt();
+    }
+
+    private <T extends HttpMessage> T processMessage(T message)
+    {
+        if (message instanceof HttpRequest) {
+            // setting Host header so we can correctly forward it to the service
+            if (myConnectionBuilder.getRemotePort() == 80) {
+                message.setHeader("Host", myConnectionBuilder.getRemoteAddress());
+            } else {
+                message.setHeader("Host", myConnectionBuilder.getRemoteAddress() + ":" + myConnectionBuilder.getRemotePort());
+            }
+        }
+
+        HttpEntity entity = null;
+        HttpEntity newEntity = null;
+
+        if (message instanceof HttpEntityEnclosingRequest) {
+            entity = ((HttpEntityEnclosingRequest) message).getEntity();
+        } else if (message instanceof HttpResponse) {
+            entity = ((HttpResponse) message).getEntity();
+        }
+
+        // redirecting reply to and fault to nodes if present
+        if (entity != null) {
+            try (InputStream is = entity.getContent()) {
+                ContentType contentType = null;
+                for (Header header : message.getHeaders("Content-Type")) {
+                    try {
+                        contentType = ContentType.parse(header.getValue());
+                    } catch (ParseException | UnsupportedCharsetException ex) {
+                    }
+                }
+
+                if (contentType != null) {
+                    Charset charset = contentType.getCharset();
+                    if (charset == null) {
+                        charset = Charset.forName("UTF-8");
+                    }
+                    String mimeType = contentType.getMimeType();
+
+                    if (mimeType.contains("json") || mimeType.contains("xml")) {
+                        String content = IOUtils.toString(is, charset.name());
+
+                        if (mimeType.contains("json")) {
+                            // TODO convert content to XML
+                            // content = Utils.convertJSONtoXML(content);
+                        }
+
+                        Document xmlDocument = Utils.parseXML(content);
+                        if (xmlDocument != null) {
+                            XPath xpath = XPathFactory.newInstance().newXPath();
+                            xpath.setNamespaceContext(new FimsNamespaceContext());
+
+                            for (String expression : new String[]{"//bms:replyTo", "//bms:faultTo"}) {
+                                NodeList nodes = (NodeList) xpath.evaluate(expression, xmlDocument.getDocumentElement(), XPathConstants.NODESET);
+                                for (int i = 0; i < nodes.getLength(); i++) {
+                                    Node node = nodes.item(i);
+
+                                    try {
+                                        URL url = new URL(node.getTextContent());
+
+                                        if ((message instanceof HttpRequest) && !myConnectionBuilder.isCallback()) {
+                                            ConnectionBuilder cb = myConnectionBuilder.getEngine().connect(myConnectionBuilder.getLocalAddress(), 0, url.getHost(), url.getPort(), url);
+                                            URL newURL = new URL(url.getProtocol(), cb.getLocalAddress(), cb.getPort(), url.getFile());
+                                            node.setTextContent(String.valueOf(newURL));
+                                            myConnectionBuilder.getEngine().putCallback(newURL, url);
+                                        } else {
+                                            URL newURL = myConnectionBuilder.getEngine().getCallback(url);
+                                            if (newURL != null) {
+                                                node.setTextContent(String.valueOf(newURL));
+                                            }
+                                        }
+                                    } catch (MalformedURLException ex) {
+                                    }
+                                }
+                            }
+
+                            content = Utils.writeXML(xmlDocument, false, content.startsWith("<?xml"));
+
+                            if (mimeType.contains("json")) {
+                                // TODO convert content to JSON
+                                // content = Utils.convertXMLtoJSON(content);
+                            }
+
+                            if (content != null) {
+                                byte[] data = content.getBytes(charset);
+                                if (message.containsHeader("Content-Length")) {
+                                    message.setHeader("Content-Length", String.valueOf(data.length));
+                                }
+                                newEntity = new ByteArrayEntity(data);
+                            }
+                        }
+                    }
+                }
+            } catch (IOException | UnsupportedOperationException | XPathExpressionException ex) {
+                Logger.getLogger(Connection.class.getName()).log(Level.SEVERE, null, ex);
+            }
+
+            if (newEntity != null) {
+                if (message instanceof HttpEntityEnclosingRequest) {
+                    ((HttpEntityEnclosingRequest) message).setEntity(newEntity);
+                } else if (message instanceof HttpResponse) {
+                    ((HttpResponse) message).setEntity(newEntity);
+                }
+            }
+        }
+
+        return message;
     }
 }
