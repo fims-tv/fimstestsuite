@@ -1,8 +1,8 @@
-package tv.fims.test.app;
+package tv.fims.testsuite.app;
 
 import java.awt.EventQueue;
 import javax.swing.JFrame;
-import tv.fims.test.app.gui.MainFrame;
+import tv.fims.testsuite.app.gui.MainFrame;
 
 class FimsTestSuite
 {

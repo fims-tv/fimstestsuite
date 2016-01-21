@@ -1,4 +1,4 @@
-package tv.fims.test.core;
+package tv.fims.testsuite.modules.message.proxy;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -9,7 +9,7 @@ import javax.net.SocketFactory;
 
 public class ConnectionBuilder extends Thread
 {
-    private final Engine myEngine;
+    private final ProxyModuleImpl myModule;
     private final String myLocalAddress;
     private final int myLocalPort;
     private final String myRemoteAddress;
@@ -17,10 +17,10 @@ public class ConnectionBuilder extends Thread
     private final boolean myCallback;
     private final ServerSocket myServerSocket;
 
-    public ConnectionBuilder(Engine engine, String localAddress, int localPort, String remoteAddress, int remotePort, boolean isCallback) throws IOException
+    public ConnectionBuilder(ProxyModuleImpl module, String localAddress, int localPort, String remoteAddress, int remotePort, boolean isCallback) throws IOException
     {
         super("ConnectionBuilder:" + localPort + " -> " + remoteAddress + ":" + remotePort);
-        myEngine = engine;
+        myModule = module;
         myLocalAddress = localAddress;
         myLocalPort = localPort;
         myRemoteAddress = remoteAddress;
@@ -29,9 +29,9 @@ public class ConnectionBuilder extends Thread
         myServerSocket = new ServerSocket(myLocalPort);
     }
 
-    public Engine getEngine()
+    public ProxyModuleImpl getModule()
     {
-        return myEngine;
+        return myModule;
     }
 
     public String getLocalAddress()

@@ -1,4 +1,4 @@
-package tv.fims.test.core;
+package tv.fims.testsuite.modules.utils;
 
 import java.io.IOException;
 import java.io.StringReader;

@@ -1,4 +1,4 @@
-package tv.fims.test.app.gui;
+package tv.fims.testsuite.app.gui;
 
 import java.awt.Dimension;
 import java.awt.EventQueue;
@@ -14,11 +14,13 @@ import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
-import tv.fims.test.app.AppController;
+import tv.fims.testsuite.app.AppController;
+import tv.fims.testsuite.modules.Module;
+import tv.fims.testsuite.modules.message.proxy.ProxyModule;
 
-public class ConnectionPanel extends JPanel
+public class ProxyPanel extends JPanel
 {
-    private final AppController myController;
+    private final ProxyModule myModule;
     private final ActionListener myActionListener;
 
     private final JTextField myLocalAddressField;
@@ -29,12 +31,13 @@ public class ConnectionPanel extends JPanel
     private final JButton myConnectButton;
     private final JButton myDisconnectButton;
 
-    public ConnectionPanel(AppController controller)
+    public ProxyPanel(AppController controller)
     {
         super(new GridBagLayout());
 
-        myController = controller;
-        myController.addListener(new EventListenerImpl());
+        myModule = controller.getProxyModule();
+
+        myModule.addListener(new EventListenerImpl());
 
         myActionListener = new ActionListenerImpl();
 
@@ -105,12 +108,12 @@ public class ConnectionPanel extends JPanel
             @Override
             public void run()
             {
-                myLocalAddressField.setText(myController.getLocalAddress());
-                myLocalPortField.setText(String.valueOf(myController.getLocalPort()));
-                myRemoteAddressField.setText(myController.getRemoteAddress());
-                myRemotePortField.setText(String.valueOf(myController.getRemotePort()));
+                myLocalAddressField.setText(myModule.getLocalAddress());
+                myLocalPortField.setText(String.valueOf(myModule.getLocalPort()));
+                myRemoteAddressField.setText(myModule.getRemoteAddress());
+                myRemotePortField.setText(String.valueOf(myModule.getRemotePort()));
 
-                boolean isDisconnected = !myController.isConnected();
+                boolean isDisconnected = !myModule.isEnabled();
 
                 myLocalAddressField.setEditable(isDisconnected);
                 myLocalPortField.setEditable(isDisconnected);
@@ -142,15 +145,15 @@ public class ConnectionPanel extends JPanel
         {
             try {
                 if (myComponent.equals(myLocalAddressField)) {
-                    myController.setLocalAddress(myLocalAddressField.getText());
+                    myModule.setLocalAddress(myLocalAddressField.getText());
                 } else if (myComponent.equals(myLocalPortField)) {
                     int portNumber = Integer.parseInt(myLocalPortField.getText());
-                    myController.setLocalPort(portNumber);
+                    myModule.setLocalPort(portNumber);
                 } else if (myComponent.equals(myRemoteAddressField)) {
-                    myController.setRemoteAddress(myRemoteAddressField.getText());
+                    myModule.setRemoteAddress(myRemoteAddressField.getText());
                 } else if (myComponent.equals(myRemotePortField)) {
                     int portNumber = Integer.parseInt(myRemotePortField.getText());
-                    myController.setRemotePort(portNumber);
+                    myModule.setRemotePort(portNumber);
                 }
             } catch (NumberFormatException ex) {
                 reload();
@@ -158,13 +161,14 @@ public class ConnectionPanel extends JPanel
         }
     }
 
-    private class EventListenerImpl implements AppController.EventListener
+    private class EventListenerImpl implements Module.EventListener
     {
         @Override
-        public void onEvent(AppController.Event event)
+        public void onEvent(Module.Event event)
         {
             switch (event) {
-                case ConnectionUpdate:
+                case ConfigurationUpdate:
+                case EnabledUpdate:
                     reload();
                     break;
             }
@@ -178,10 +182,10 @@ public class ConnectionPanel extends JPanel
         {
             switch (e.getActionCommand()) {
                 case "Connect":
-                    myController.connect();
+                    myModule.enable();
                     break;
                 case "Disconnect":
-                    myController.disconnect();
+                    myModule.disable();
                     break;
             }
         }

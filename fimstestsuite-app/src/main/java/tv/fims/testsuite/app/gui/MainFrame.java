@@ -1,11 +1,9 @@
-package tv.fims.test.app.gui;
+package tv.fims.testsuite.app.gui;
 
 import java.awt.EventQueue;
 import java.awt.HeadlessException;
-import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.File;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
@@ -13,9 +11,8 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JTabbedPane;
-import javax.swing.SwingUtilities;
 import javax.swing.filechooser.FileNameExtensionFilter;
-import tv.fims.test.app.AppController;
+import tv.fims.testsuite.app.AppController;
 
 public class MainFrame extends JFrame
 {
@@ -38,7 +35,7 @@ public class MainFrame extends JFrame
         setJMenuBar(createMenuBar());
 
         myTabbedPane = new JTabbedPane();
-        myTabbedPane.addTab("Connection", new ConnectionPanel(myController));
+        myTabbedPane.addTab("Proxy", new ProxyPanel(myController));
         myTabbedPane.addTab("Logging", new LoggingPanel(myController));
         add(myTabbedPane);
 
@@ -97,10 +94,10 @@ public class MainFrame extends JFrame
                     JFileChooser chooser = new JFileChooser();
                     FileNameExtensionFilter filter = new FileNameExtensionFilter("Binary Log files (*.binlog)", "binlog");
                     chooser.setFileFilter(filter);
-                    chooser.setSelectedFile(myController.getBinaryLogFile());
+                    chooser.setSelectedFile(myController.getLoggingModule().getBinaryLogFile());
                     int returnVal = chooser.showOpenDialog(MainFrame.this);
                     if (returnVal == JFileChooser.APPROVE_OPTION) {
-                        if (myController.replayBinaryLogFile(chooser.getSelectedFile())) {
+                        if (myController.getReplayModule().replay(chooser.getSelectedFile())) {
                             JOptionPane.showMessageDialog(MainFrame.this, "Sucessfully replayed file '" + chooser.getSelectedFile() + "'.");
                         } else {
                             JOptionPane.showMessageDialog(MainFrame.this, "An error occurred when replaying file '" + chooser.getSelectedFile() + "'.");

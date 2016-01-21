@@ -1,4 +1,4 @@
-package tv.fims.test.core;
+package tv.fims.testsuite.modules.utils;
 
 import java.util.Iterator;
 import javax.xml.XMLConstants;

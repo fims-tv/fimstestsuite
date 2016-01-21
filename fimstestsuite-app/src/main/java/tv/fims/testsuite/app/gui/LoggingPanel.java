@@ -1,4 +1,4 @@
-package tv.fims.test.app.gui;
+package tv.fims.testsuite.app.gui;
 
 import java.awt.Dimension;
 import java.awt.EventQueue;
@@ -17,11 +17,13 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 import javax.swing.filechooser.FileNameExtensionFilter;
-import tv.fims.test.app.AppController;
+import tv.fims.testsuite.app.AppController;
+import tv.fims.testsuite.modules.Module;
+import tv.fims.testsuite.modules.logging.LoggingModule;
 
 public class LoggingPanel extends JPanel
 {
-    private final AppController myController;
+    private final LoggingModule myModule;
     private final ActionListener myActionListener;
 
     private final JCheckBox myBinaryLogCheckBox;
@@ -39,10 +41,11 @@ public class LoggingPanel extends JPanel
     {
         super(new GridBagLayout());
 
-        myController = controller;
         myActionListener = new ActionListenerImpl();
 
-        myController.addListener(new EventListenerImpl());
+        myModule = controller.getLoggingModule();
+
+        myModule.addListener(new EventListenerImpl());
 
         JLabel lblBinaryLogFile = new JLabel("Binary log file:");
         myBinaryLogCheckBox = new JCheckBox();
@@ -130,12 +133,12 @@ public class LoggingPanel extends JPanel
             @Override
             public void run()
             {
-                myBinaryLogCheckBox.setSelected(myController.isBinaryLogEnabled());
-                myRegularLogCheckBox.setSelected(myController.isRegularLogEnabled());
-                myBinaryLogFileField.setText(String.valueOf(myController.getBinaryLogFile()));
-                myRegularLogFileField.setText(String.valueOf(myController.getRegularLogFile()));
+                myBinaryLogCheckBox.setSelected(myModule.isBinaryLogEnabled());
+                myRegularLogCheckBox.setSelected(myModule.isRegularLogEnabled());
+                myBinaryLogFileField.setText(String.valueOf(myModule.getBinaryLogFile()));
+                myRegularLogFileField.setText(String.valueOf(myModule.getRegularLogFile()));
 
-                boolean isLogging = myController.isLogging();
+                boolean isLogging = myModule.isEnabled();
 
                 myBinaryLogCheckBox.setEnabled(!isLogging);
                 myBinaryLogFileButton.setEnabled(!isLogging);
@@ -149,13 +152,14 @@ public class LoggingPanel extends JPanel
         });
     }
 
-    private class EventListenerImpl implements AppController.EventListener
+    private class EventListenerImpl implements Module.EventListener
     {
         @Override
-        public void onEvent(AppController.Event event)
+        public void onEvent(Module.Event event)
         {
             switch (event) {
-                case LoggingUpdate:
+                case ConfigurationUpdate:
+                case EnabledUpdate:
                     reload();
                     break;
             }
@@ -179,7 +183,7 @@ public class LoggingPanel extends JPanel
                     chooser.setSelectedFile(new File(myBinaryLogFileField.getText()));
                     returnVal = chooser.showSaveDialog((Window) SwingUtilities.getRoot(LoggingPanel.this));
                     if (returnVal == JFileChooser.APPROVE_OPTION) {
-                        myController.setBinaryLogFile(chooser.getSelectedFile());
+                        myModule.setBinaryLogFile(chooser.getSelectedFile());
                     }
                     break;
                 case "SelectRegularLogFile":
@@ -189,23 +193,22 @@ public class LoggingPanel extends JPanel
                     chooser.setSelectedFile(new File(myRegularLogFileField.getText()));
                     returnVal = chooser.showSaveDialog((Window) SwingUtilities.getRoot(LoggingPanel.this));
                     if (returnVal == JFileChooser.APPROVE_OPTION) {
-                         myController.setRegularLogFile(chooser.getSelectedFile());
+                         myModule.setRegularLogFile(chooser.getSelectedFile());
                     }
                     break;
                 case "EnableBinaryLogFile":
-                    myController.setBinaryLogEnabled(myBinaryLogCheckBox.isSelected());
+                    myModule.setBinaryLogEnabled(myBinaryLogCheckBox.isSelected());
                     break;
                 case "EnableRegularLogFile":
-                    myController.setRegularLogEnabled(myRegularLogCheckBox.isSelected());
+                    myModule.setRegularLogEnabled(myRegularLogCheckBox.isSelected());
                     break;
                 case "Start":
-                    myController.startLogging();
+                    myModule.enable();
                     break;
                 case "Stop":
-                    myController.stopLogging();
+                    myModule.disable();
                     break;
             }
         }
     }
-
 }

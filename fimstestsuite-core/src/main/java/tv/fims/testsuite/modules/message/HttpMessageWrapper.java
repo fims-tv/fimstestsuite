@@ -1,5 +1,6 @@
-package tv.fims.test.core;
+package tv.fims.testsuite.modules.message;
 
+import tv.fims.testsuite.modules.utils.Utils;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;

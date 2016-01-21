@@ -1,4 +1,4 @@
-package tv.fims.test.core;
+package tv.fims.testsuite.modules.message.proxy;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -31,6 +31,9 @@ import org.apache.http.util.EntityUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+import tv.fims.testsuite.modules.utils.FimsNamespaceContext;
+import tv.fims.testsuite.modules.message.HttpMessageWrapper;
+import tv.fims.testsuite.modules.utils.Utils;
 
 public class Connection extends Thread
 {
@@ -122,7 +125,7 @@ public class Connection extends Thread
                 HttpMessageWrapper response = receiveResponse(serverConnection);
                 sendMessage(clientConnection, response);
 
-                myConnectionBuilder.getEngine().process(request, response);
+                myConnectionBuilder.getModule().process(request, response);
             }
         } catch (HttpException | IOException ex) {
         } finally {
@@ -216,12 +219,12 @@ public class Connection extends Thread
                                         URL url = new URL(node.getTextContent());
 
                                         if ((message instanceof HttpRequest) && !myConnectionBuilder.isCallback()) {
-                                            ConnectionBuilder cb = myConnectionBuilder.getEngine().connect(myConnectionBuilder.getLocalAddress(), 0, url.getHost(), url.getPort(), url);
+                                            ConnectionBuilder cb = myConnectionBuilder.getModule().connect(myConnectionBuilder.getLocalAddress(), 0, url.getHost(), url.getPort(), url);
                                             URL newURL = new URL(url.getProtocol(), cb.getLocalAddress(), cb.getPort(), url.getFile());
                                             node.setTextContent(String.valueOf(newURL));
-                                            myConnectionBuilder.getEngine().putCallback(newURL, url);
+                                            myConnectionBuilder.getModule().putCallback(newURL, url);
                                         } else {
-                                            URL newURL = myConnectionBuilder.getEngine().getCallback(url);
+                                            URL newURL = myConnectionBuilder.getModule().getCallback(url);
                                             if (newURL != null) {
                                                 node.setTextContent(String.valueOf(newURL));
                                             }
