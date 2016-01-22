@@ -1,6 +1,6 @@
 apply plugin: "application"
 
-mainClassName = "tv.fims.test.app.FimsTestSuite"
+mainClassName = "tv.fims.testsuite.app.FimsTestSuite"
 ext.mainClass = mainClassName
 
 jar {
@@ -12,4 +12,3 @@ jar {
 dependencies {
     compile project(":fimstestsuite-core")
 }
-
