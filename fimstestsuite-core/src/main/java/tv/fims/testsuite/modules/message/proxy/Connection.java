@@ -219,7 +219,22 @@ public class Connection extends Thread
                                         URL url = new URL(node.getTextContent());
 
                                         if ((message instanceof HttpRequest) && !myConnectionBuilder.isCallback()) {
-                                            ConnectionBuilder cb = myConnectionBuilder.getModule().connect(myConnectionBuilder.getLocalAddress(), 0, url.getHost(), url.getPort(), url);
+                                            int port = url.getPort();
+                                            if (port < 0) {
+                                                switch (url.getProtocol()) {
+                                                    case "http":
+                                                        port = 80;
+                                                        break;
+                                                    case "https":
+                                                        port = 443;
+                                                        break;
+                                                    default:
+                                                        Logger.getLogger(Connection.class.getName()).log(Level.SEVERE, "Not able to determine callback port number for URL ''{0}''", url);
+                                                        break;
+                                                }
+                                            }
+
+                                            ConnectionBuilder cb = myConnectionBuilder.getModule().connect(myConnectionBuilder.getLocalAddress(), 0, url.getHost(), port, url);
                                             URL newURL = new URL(url.getProtocol(), cb.getLocalAddress(), cb.getPort(), url.getFile());
                                             node.setTextContent(String.valueOf(newURL));
                                             myConnectionBuilder.getModule().putCallback(newURL, url);
