@@ -14,7 +14,7 @@ The FIMS Test Suite is built such that it can intercept such messages and perfor
 
 ## How to build it?
 
-The project is build in Java and uses [Gradle][] as a build tool. It should be sufficient to have the Java JDK installed and the `$GRADLE_HOME/bin` folder added to the `$PATH` variable. Then running `gradle run` on the commandline should build and run the application.
+The project is built in Java and uses [Gradle][] as a build tool. It should be sufficient to have the Java JDK installed and the `$GRADLE_HOME/bin` folder added to the `$PATH` variable. Then running `gradle run` on the commandline should build and run the application.
 
 [Gradle]: http://www.gradle.org "Gradle"
 

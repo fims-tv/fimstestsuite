@@ -18,12 +18,15 @@ import tv.fims.testsuite.modules.message.proxy.ProxyModule;
 import tv.fims.testsuite.modules.message.proxy.ProxyModuleImpl;
 import tv.fims.testsuite.modules.message.replay.ReplayModule;
 import tv.fims.testsuite.modules.message.replay.ReplayModuleImpl;
+import tv.fims.testsuite.modules.validation.ValidationModule;
+import tv.fims.testsuite.modules.validation.ValidationModuleImpl;
 
 public class AppControllerImpl implements AppController
 {
     private final ProxyModule myProxyModule;
     private final LoggingModule myLoggingModule;
     private final ReplayModule myReplayModule;
+    private final ValidationModule myValidationModule;
 
     private boolean isLoadingProperties;
 
@@ -34,12 +37,17 @@ public class AppControllerImpl implements AppController
         myLoggingModule = new LoggingModuleImpl();
         myLoggingModule.addListener(listener);
 
+        myValidationModule = new ValidationModuleImpl();
+        myValidationModule.addListener(listener);
+
         myProxyModule = new ProxyModuleImpl();
         myProxyModule.addListener(listener);
         myProxyModule.addListener(myLoggingModule);
+        myProxyModule.addListener(myValidationModule);
 
         myReplayModule = new ReplayModuleImpl();
         myReplayModule.addListener(myLoggingModule);
+        myReplayModule.addListener(myValidationModule);
     }
 
     @Override
@@ -58,6 +66,12 @@ public class AppControllerImpl implements AppController
     public ReplayModule getReplayModule()
     {
         return myReplayModule;
+    }
+
+    @Override
+    public ValidationModule getValidationModule()
+    {
+        return myValidationModule;
     }
 
     @Override
@@ -108,6 +122,11 @@ public class AppControllerImpl implements AppController
                 myLoggingModule.setRegularLogFile(new File(props.getProperty("log.regular.file", String.valueOf(myLoggingModule.getRegularLogFile()))));
             } catch (Exception ex) {
             }
+
+            try {
+                myValidationModule.setXMLSchemaFile(new File(props.getProperty("validation.xmlschema.file", String.valueOf(myValidationModule.getXMLSchemaFile()))));
+            } catch (Exception ex) {
+            }
         } catch (FileNotFoundException ex) {
         } catch (IOException ex) {
             Logger.getLogger(AppControllerImpl.class.getName()).log(Level.SEVERE, null, ex);
@@ -130,6 +149,7 @@ public class AppControllerImpl implements AppController
                 props.setProperty("log.binary.file", String.valueOf(myLoggingModule.getBinaryLogFile()));
                 props.setProperty("log.regular.enabled", String.valueOf(myLoggingModule.isRegularLogEnabled()));
                 props.setProperty("log.regular.file", String.valueOf(myLoggingModule.getRegularLogFile()));
+                props.setProperty("validation.xmlschema.file", String.valueOf(myValidationModule.getXMLSchemaFile()));
                 props.store(os, "");
             } catch (FileNotFoundException ex) {
                 Logger.getLogger(AppControllerImpl.class.getName()).log(Level.SEVERE, null, ex);

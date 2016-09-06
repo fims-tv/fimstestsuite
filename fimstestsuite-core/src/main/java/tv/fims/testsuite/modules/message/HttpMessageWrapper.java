@@ -1,6 +1,6 @@
 package tv.fims.testsuite.modules.message;
 
-import tv.fims.testsuite.modules.utils.Utils;
+import tv.fims.testsuite.modules.utils.XMLUtils;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -311,13 +311,13 @@ public class HttpMessageWrapper
                             // content = Utils.convertJSONtoXML(content);
                         }
 
-                        content = Utils.formatXML(content);
+                        content = XMLUtils.formatXML(content);
                     }
 
                     sb.append(content);
                 }
             } catch (IOException | UnsupportedOperationException ex) {
-                Logger.getLogger(Utils.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(HttpMessageWrapper.class.getName()).log(Level.SEVERE, null, ex);
                 sb.append("FAILED TO SHOW CONTENT WITH LENGTH OF ");
                 sb.append(entity.getContentLength());
             }
