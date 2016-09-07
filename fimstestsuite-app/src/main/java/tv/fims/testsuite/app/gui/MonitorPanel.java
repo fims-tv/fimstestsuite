@@ -283,7 +283,9 @@ public class MonitorPanel extends JPanel
                                 RequestResponsePanel.this.remove(myRequestTextPane);
                                 myRequestVisible = false;
                             } else {
-                                RequestResponsePanel.this.add(myRequestErrorPane, myRequestErrorGridBagConstraints);
+                                if (!myRequestErrorPane.getText().isEmpty()) {
+                                    RequestResponsePanel.this.add(myRequestErrorPane, myRequestErrorGridBagConstraints);
+                                }
                                 RequestResponsePanel.this.add(myRequestTextPane, myRequestTextGridBagConstraints);
                                 myRequestVisible = true;
                             }
@@ -292,11 +294,13 @@ public class MonitorPanel extends JPanel
                             break;
                         case "Response":
                             if (myResponseVisible) {
-                                RequestResponsePanel.this.remove(myResponseErrorPane);
+                                    RequestResponsePanel.this.remove(myResponseErrorPane);
                                 RequestResponsePanel.this.remove(myResponseTextPane);
                                 myResponseVisible = false;
                             } else {
-                                RequestResponsePanel.this.add(myResponseErrorPane, myResponseErrorGridBagConstraints);
+                                if (!myResponseErrorPane.getText().isEmpty()) {
+                                    RequestResponsePanel.this.add(myResponseErrorPane, myResponseErrorGridBagConstraints);
+                                }
                                 RequestResponsePanel.this.add(myResponseTextPane, myResponseTextGridBagConstraints);
                                 myResponseVisible = true;
                             }
