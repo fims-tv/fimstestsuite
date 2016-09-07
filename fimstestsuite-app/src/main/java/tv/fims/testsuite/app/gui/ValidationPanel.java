@@ -142,7 +142,7 @@ public class ValidationPanel extends JPanel
                     filter = new FileNameExtensionFilter("XML Schemas (*.xsd)", "xsd");
                     chooser.setFileFilter(filter);
                     chooser.setSelectedFile(new File(myBinaryLogFileField.getText()));
-                    returnVal = chooser.showSaveDialog((Window) SwingUtilities.getRoot(ValidationPanel.this));
+                    returnVal = chooser.showOpenDialog((Window) SwingUtilities.getRoot(ValidationPanel.this));
                     if (returnVal == JFileChooser.APPROVE_OPTION) {
                         myModule.setXMLSchemaFile(chooser.getSelectedFile());
                     }

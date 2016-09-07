@@ -199,12 +199,16 @@ public class ValidationModuleImpl extends ModuleImpl implements ValidationModule
                             XPath xpath = XPathFactory.newInstance().newXPath();
                             xpath.setNamespaceContext(new FimsNamespaceContext());
 
-                            NodeList nodes = (NodeList) xpath.evaluate("/S:Envelope/S:Body/*", xmlDocument.getDocumentElement(), XPathConstants.NODESET);
+                            NodeList nodes = (NodeList) xpath.evaluate("/S:Envelope/S:Body/S:Fault/detail/*", xmlDocument.getDocumentElement(), XPathConstants.NODESET);
+
+                            if (nodes.getLength() == 0) {
+                                nodes = (NodeList) xpath.evaluate("/S:Envelope/S:Body/*", xmlDocument.getDocumentElement(), XPathConstants.NODESET);
+                            }
 
                             doc = XMLUtils.newEmptyDocument();
 
-                            for (int i = 0; i < nodes.getLength(); i++) {
-                                Node node = nodes.item(i);
+                            if (nodes.getLength() > 0) {
+                                Node node = nodes.item(0);
                                 Node newNode = doc.importNode(node, true);
                                 doc.appendChild(newNode);
                             }
