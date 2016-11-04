@@ -6,6 +6,11 @@ This repository contains the work in progress of the FIMS Test Suite that is bei
 
 The FIMS Test Suite will be an application that allows developers of FIMS services and FIMS service clients to validate whether the messages they are sending and receiving are FIMS compliant. At the moment of writing the available functionality is limited to basic XML-Schema validation using the SOAP interfaces and logging of the HTTP messages that are being sent from a FIMS client to a FIMS service and vice versa.
 
+
+## Version
+
+1.1.0
+
 ## How does it work?
 
 The normal use case is that a FIMS client sends an HTTP request to a FIMS service and then the FIMS service will send an HTTP response back. Optionally the HTTP request can contain a `<bms:replyTo>` and/or `<bms:faultTo>` nodes, which indicate endpoints that the FIMS service should use when it needs to send asynchronously messages back to the client.
@@ -13,14 +18,14 @@ The normal use case is that a FIMS client sends an HTTP request to a FIMS servic
 The FIMS Test Suite is built such that it can intercept such messages and perform operations on them. It is capable of doing XML Schema validation of the messages that are passing by, as well it can write these (XML) messages in pretty print format to a text file.
 
 ## Requirements
-For successful compilation and running of this test tool Java SDK v7+ is required.
+For successful compilation and running of this test tool Java SDK v7+ is required to be installed.
 
 ## Usage
 
-Change working directory of shell / command prompt to the project folder then run the following command to compile and run the tool:
-```
-$ ./gradlew run
-```
+- Windows
+  - Execute `fimstestsuite.bat` from windows explorer or command prompt
+- Linux / MacOS
+  - Open terminal and change working directory to the project folder then execute : `$ ./gradlew run`
 
 In order to use this application you ideally have already a FIMS client and a FIMS service communicating with each other. It is however possible to test this application by simply logging HTTP traffic. The key concept is that the FIMS Test Suite works as a 'proxy' server. The FIMS client will not send messages directly to the FIMS service, but to the FIMS Test Suite.The FIMS Test Suite will redirect the messages to the FIMS service. Responses from the FIMS Service are in turn sent to the FIMS Test Suite and redirected back again to the FIMS client. This way the FIMS Test Suite will see all the messages being sent between the client and service.
 
