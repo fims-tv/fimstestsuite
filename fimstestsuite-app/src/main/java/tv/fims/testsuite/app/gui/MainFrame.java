@@ -19,6 +19,7 @@ public class MainFrame extends JFrame
     private final AppController myController;
     private final ActionListener myActionListener;
     private final JTabbedPane myTabbedPane;
+    private final MonitorFrame myMontitorFrame;
 
     public MainFrame(String title, AppController controller) throws HeadlessException
     {
@@ -37,7 +38,10 @@ public class MainFrame extends JFrame
         myTabbedPane = new JTabbedPane();
         myTabbedPane.addTab("Proxy", new ProxyPanel(myController));
         myTabbedPane.addTab("Logging", new LoggingPanel(myController));
+        myTabbedPane.addTab("Validation", new ValidationPanel(myController));
         add(myTabbedPane);
+
+        myMontitorFrame = new MonitorFrame(this, "Monitor", myController);
 
         pack();
         setLocationRelativeTo(null);
@@ -61,6 +65,7 @@ public class MainFrame extends JFrame
         JMenuBar menubar = new JMenuBar();
 
         menubar.add(createFileMenu());
+        menubar.add(createWindowMenu());
 
         return menubar;
     }
@@ -78,6 +83,18 @@ public class MainFrame extends JFrame
 
         item = new JMenuItem("Exit");
         item.setActionCommand("Exit");
+        item.addActionListener(myActionListener);
+        menu.add(item);
+
+        return menu;
+    }
+
+    private JMenu createWindowMenu()
+    {
+        JMenu menu = new JMenu("Window");
+
+        JMenuItem item = new JMenuItem("Monitor");
+        item.setActionCommand("Monitor");
         item.addActionListener(myActionListener);
         menu.add(item);
 
@@ -103,6 +120,9 @@ public class MainFrame extends JFrame
                             JOptionPane.showMessageDialog(MainFrame.this, "An error occurred when replaying file '" + chooser.getSelectedFile() + "'.");
                         }
                     }
+                    break;
+                case "Monitor":
+                    myMontitorFrame.setVisible(true);
                     break;
                 case "Exit":
                     dispose();

@@ -10,6 +10,8 @@ public class FimsNamespaceContext implements NamespaceContext
     public String getNamespaceURI(String prefix)
     {
         switch (prefix) {
+            case "S":
+                return "http://schemas.xmlsoap.org/soap/envelope/";
             case "bms":
                 return "http://base.fims.tv";
             case "cms":
@@ -39,6 +41,8 @@ public class FimsNamespaceContext implements NamespaceContext
     public String getPrefix(String namespaceURI)
     {
         switch (namespaceURI) {
+            case "http://schemas.xmlsoap.org/soap/envelope/":
+                return "S";
             case "http://base.fims.tv":
                 return "bms";
             case "http://capturemedia.fims.tv":

@@ -23,10 +23,10 @@ public class ProxyPanel extends JPanel
     private final ProxyModule myModule;
     private final ActionListener myActionListener;
 
-    private final JTextField myLocalAddressField;
-    private final JTextField myLocalPortField;
-    private final JTextField myRemoteAddressField;
-    private final JTextField myRemotePortField;
+    private final JTextField myFimsServiceIpAddressField;
+    private final JTextField myFimsServicePortNumberField;
+    private final JTextField myTestSuiteIpAddressField;
+    private final JTextField myTestSuitePortNumberField;
 
     private final JButton myConnectButton;
     private final JButton myDisconnectButton;
@@ -41,25 +41,25 @@ public class ProxyPanel extends JPanel
 
         myActionListener = new ActionListenerImpl();
 
-        JLabel lblLocalAddress = new JLabel("Local Address:");
-        myLocalAddressField = new JTextField();
-        myLocalAddressField.setPreferredSize(new Dimension(300, 26));
-        myLocalAddressField.addFocusListener(new FocusListenerImpl(myLocalAddressField));
+        JLabel lblRemoteAddress = new JLabel("FIMS Service IP Address:");
+        myFimsServiceIpAddressField = new JTextField();
+        myFimsServiceIpAddressField.setPreferredSize(new Dimension(300, 26));
+        myFimsServiceIpAddressField.addFocusListener(new FocusListenerImpl(myFimsServiceIpAddressField));
 
-        JLabel lblLocalPort = new JLabel("Local Port:");
-        myLocalPortField = new JTextField();
-        myLocalPortField.setPreferredSize(new Dimension(300, 26));
-        myLocalPortField.addFocusListener(new FocusListenerImpl(myLocalPortField));
+        JLabel lblRemotePort = new JLabel("FIMS Service Port Number:");
+        myFimsServicePortNumberField = new JTextField();
+        myFimsServicePortNumberField.setPreferredSize(new Dimension(300, 26));
+        myFimsServicePortNumberField.addFocusListener(new FocusListenerImpl(myFimsServicePortNumberField));
 
-        JLabel lblRemoteAddress = new JLabel("Remote Address:");
-        myRemoteAddressField = new JTextField();
-        myRemoteAddressField.setPreferredSize(new Dimension(300, 26));
-        myRemoteAddressField.addFocusListener(new FocusListenerImpl(myRemoteAddressField));
+        JLabel lblLocalAddress = new JLabel("Test Suite IP Address:");
+        myTestSuiteIpAddressField = new JTextField();
+        myTestSuiteIpAddressField.setPreferredSize(new Dimension(300, 26));
+        myTestSuiteIpAddressField.addFocusListener(new FocusListenerImpl(myTestSuiteIpAddressField));
 
-        JLabel lblRemotePort = new JLabel("Remote Port:");
-        myRemotePortField = new JTextField();
-        myRemotePortField.setPreferredSize(new Dimension(300, 26));
-        myRemotePortField.addFocusListener(new FocusListenerImpl(myRemotePortField));
+        JLabel lblLocalPort = new JLabel("Test Suite Port Number:");
+        myTestSuitePortNumberField = new JTextField();
+        myTestSuitePortNumberField.setPreferredSize(new Dimension(300, 26));
+        myTestSuitePortNumberField.addFocusListener(new FocusListenerImpl(myTestSuitePortNumberField));
 
         myConnectButton = new JButton("Connect");
         myConnectButton.setActionCommand("Connect");
@@ -83,17 +83,17 @@ public class ProxyPanel extends JPanel
         c2.fill = GridBagConstraints.HORIZONTAL;
         c2.insets = new Insets(5, 5, 5, 5);
 
-        add(lblLocalAddress, c1);
-        add(myLocalAddressField, c2);
-
-        add(lblLocalPort, c1);
-        add(myLocalPortField, c2);
-
         add(lblRemoteAddress, c1);
-        add(myRemoteAddressField, c2);
+        add(myFimsServiceIpAddressField, c2);
 
         add(lblRemotePort, c1);
-        add(myRemotePortField, c2);
+        add(myFimsServicePortNumberField, c2);
+
+        add(lblLocalAddress, c1);
+        add(myTestSuiteIpAddressField, c2);
+
+        add(lblLocalPort, c1);
+        add(myTestSuitePortNumberField, c2);
 
         add(myConnectButton, c1);
         add(myDisconnectButton, c2);
@@ -108,17 +108,17 @@ public class ProxyPanel extends JPanel
             @Override
             public void run()
             {
-                myLocalAddressField.setText(myModule.getLocalAddress());
-                myLocalPortField.setText(String.valueOf(myModule.getLocalPort()));
-                myRemoteAddressField.setText(myModule.getRemoteAddress());
-                myRemotePortField.setText(String.valueOf(myModule.getRemotePort()));
+                myTestSuiteIpAddressField.setText(myModule.getLocalAddress());
+                myTestSuitePortNumberField.setText(String.valueOf(myModule.getLocalPort()));
+                myFimsServiceIpAddressField.setText(myModule.getRemoteAddress());
+                myFimsServicePortNumberField.setText(String.valueOf(myModule.getRemotePort()));
 
                 boolean isDisconnected = !myModule.isEnabled();
 
-                myLocalAddressField.setEditable(isDisconnected);
-                myLocalPortField.setEditable(isDisconnected);
-                myRemoteAddressField.setEditable(isDisconnected);
-                myRemotePortField.setEditable(isDisconnected);
+                myTestSuiteIpAddressField.setEditable(isDisconnected);
+                myTestSuitePortNumberField.setEditable(isDisconnected);
+                myFimsServiceIpAddressField.setEditable(isDisconnected);
+                myFimsServicePortNumberField.setEditable(isDisconnected);
 
                 myConnectButton.setEnabled(isDisconnected);
                 myDisconnectButton.setEnabled(!isDisconnected);
@@ -144,15 +144,15 @@ public class ProxyPanel extends JPanel
         public void focusLost(FocusEvent e)
         {
             try {
-                if (myComponent.equals(myLocalAddressField)) {
-                    myModule.setLocalAddress(myLocalAddressField.getText());
-                } else if (myComponent.equals(myLocalPortField)) {
-                    int portNumber = Integer.parseInt(myLocalPortField.getText());
+                if (myComponent.equals(myTestSuiteIpAddressField)) {
+                    myModule.setLocalAddress(myTestSuiteIpAddressField.getText());
+                } else if (myComponent.equals(myTestSuitePortNumberField)) {
+                    int portNumber = Integer.parseInt(myTestSuitePortNumberField.getText());
                     myModule.setLocalPort(portNumber);
-                } else if (myComponent.equals(myRemoteAddressField)) {
-                    myModule.setRemoteAddress(myRemoteAddressField.getText());
-                } else if (myComponent.equals(myRemotePortField)) {
-                    int portNumber = Integer.parseInt(myRemotePortField.getText());
+                } else if (myComponent.equals(myFimsServiceIpAddressField)) {
+                    myModule.setRemoteAddress(myFimsServiceIpAddressField.getText());
+                } else if (myComponent.equals(myFimsServicePortNumberField)) {
+                    int portNumber = Integer.parseInt(myFimsServicePortNumberField.getText());
                     myModule.setRemotePort(portNumber);
                 }
             } catch (NumberFormatException ex) {

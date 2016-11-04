@@ -33,7 +33,7 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import tv.fims.testsuite.modules.utils.FimsNamespaceContext;
 import tv.fims.testsuite.modules.message.HttpMessageWrapper;
-import tv.fims.testsuite.modules.utils.Utils;
+import tv.fims.testsuite.modules.utils.XMLUtils;
 
 public class Connection extends Thread
 {
@@ -205,7 +205,7 @@ public class Connection extends Thread
                             // content = Utils.convertJSONtoXML(content);
                         }
 
-                        Document xmlDocument = Utils.parseXML(content);
+                        Document xmlDocument = XMLUtils.parseXML(content);
                         if (xmlDocument != null) {
                             XPath xpath = XPathFactory.newInstance().newXPath();
                             xpath.setNamespaceContext(new FimsNamespaceContext());
@@ -219,7 +219,22 @@ public class Connection extends Thread
                                         URL url = new URL(node.getTextContent());
 
                                         if ((message instanceof HttpRequest) && !myConnectionBuilder.isCallback()) {
-                                            ConnectionBuilder cb = myConnectionBuilder.getModule().connect(myConnectionBuilder.getLocalAddress(), 0, url.getHost(), url.getPort(), url);
+                                            int port = url.getPort();
+                                            if (port < 0) {
+                                                switch (url.getProtocol()) {
+                                                    case "http":
+                                                        port = 80;
+                                                        break;
+                                                    case "https":
+                                                        port = 443;
+                                                        break;
+                                                    default:
+                                                        Logger.getLogger(Connection.class.getName()).log(Level.SEVERE, "Not able to determine callback port number for URL ''{0}''", url);
+                                                        break;
+                                                }
+                                            }
+
+                                            ConnectionBuilder cb = myConnectionBuilder.getModule().connect(myConnectionBuilder.getLocalAddress(), 0, url.getHost(), port, url);
                                             URL newURL = new URL(url.getProtocol(), cb.getLocalAddress(), cb.getPort(), url.getFile());
                                             node.setTextContent(String.valueOf(newURL));
                                             myConnectionBuilder.getModule().putCallback(newURL, url);
@@ -234,7 +249,7 @@ public class Connection extends Thread
                                 }
                             }
 
-                            content = Utils.writeXML(xmlDocument, false, content.startsWith("<?xml"));
+                            content = XMLUtils.writeXML(xmlDocument, false, content.startsWith("<?xml"));
 
                             if (mimeType.contains("json")) {
                                 // TODO convert content to JSON
